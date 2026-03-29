@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TN Election 2026 Interactive Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --dmk-color: #DD2222; /* Vibrant red/maroon for DMK */
+            --aiadmk-color: #009933; /* Strong Green for AIADMK */
+            --tvk-color: #FFC000; /* Yellow for TVK */
+            --ntk-color: #000000; /* Black/Dark Gray for NTK - adjusted for dark mode */
+            --bjp-color: #FF9933; /* Saffron for BJP */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0B1120; /* Deep slate background */
+            color: #E2E8F0; /* Slate 200 text */
+            /* Subtle mesh gradient background */
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(221, 34, 34, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(0, 153, 51, 0.05), transparent 25%);
+            background-attachment: fixed;
+        }
+        h1, h2, h3, .number-font {
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.6); /* Slate 800 with opacity */
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .kpi-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Glow effects for KPIs */
+        .glow-red::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(221,34,34,0.1) 0%, transparent 60%); z-index: -1; }
+        .glow-green::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(0,153,51,0.1) 0%, transparent 60%); z-index: -1; }
+        .glow-blue::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 60%); z-index: -1; }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+        }
+        
+        /* Custom Select Styling */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-position: right 1rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0F172A; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    </style>
+</head>
+<body class="antialiased min-h-screen">
+
+    <main class="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
+
+        <header class="text-center mb-12">
+            <div class="inline-block px-4 py-1 rounded-full border border-slate-700 bg-slate-800/50 text-slate-300 text-sm font-semibold tracking-wider mb-4 shadow-sm backdrop-blur-sm">
+                PRE-POLL TRACKER 2026
+            </div>
+            <h1 class="text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-400 to-green-500 mb-4 tracking-tight drop-shadow-sm">
+                Tamil Nadu Election Dashboard
+            </h1>
+            <p class="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto font-light">
+                Analyzing the volatile multi-cornered contest of 2026 based on the latest exit/opinion poll aggregates.
+            </p>
+
+            <!-- Social Media Disclaimer -->
+            <div class="mt-8 mx-auto max-w-3xl bg-[#FFC000]/10 border border-[#FFC000]/30 rounded-xl p-4 text-left backdrop-blur-sm shadow-inner transition hover:bg-[#FFC000]/20">
+                <div class="flex items-start">
+                    <svg class="w-6 h-6 text-[#FFC000] mr-3 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <div>
+                        <h3 class="text-xs font-bold text-[#FFC000] uppercase tracking-wider mb-1">Important Disclaimer</h3>
+                        <p class="text-sm text-slate-300 leading-snug">
+                            This dashboard visualizes <strong class="text-white">estimated projections</strong> based on aggregate pre-poll surveys and opinion data. 
+                            These are <strong class="text-white">not actual election results</strong>. This data is for strategic analysis and educational purposes only.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- KPI Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass-panel rounded-2xl p-6 kpi-card glow-blue text-center flex flex-col justify-center border-t-4 border-t-blue-500">
+                <p class="text-slate-400 font-medium text-sm tracking-widest uppercase mb-1">Assembly Size</p>
+                <p class="text-5xl font-bold number-font text-white drop-shadow-md">234</p>
+                <p class="text-xs text-slate-500 mt-2">Total Constituencies</p>
+            </div>
+            
+            <div class="glass-panel rounded-2xl p-6 kpi-card glow-red text-center flex flex-col justify-center border-t-4 border-t-red-500">
+                <p class="text-slate-400 font-medium text-sm tracking-widest uppercase mb-1">Majority Mark</p>
+                <p class="text-5xl font-bold number-font text-white drop-shadow-md">118</p>
+                <p class="text-xs text-slate-500 mt-2">Seats needed to form Govt</p>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6 kpi-card glow-green text-center flex flex-col justify-center border-t-4 border-t-green-500">
+                <p class="text-slate-400 font-medium text-sm tracking-widest uppercase mb-1">Current Leader</p>
+                <p class="text-4xl font-bold number-font text-red-400 drop-shadow-md mt-1">DMK+</p>
+                <p class="text-xs text-slate-500 mt-2">Projected to maintain edge</p>
+            </div>
+        </div>
+
+        <!-- Interactive Control Panel & Filters -->
+        <div class="glass-panel rounded-2xl p-6 mb-8 flex flex-col md:flex-row justify-between items-center z-20 relative">
+            <div>
+                <h2 class="text-xl font-bold text-white mb-2 md:mb-0">Alliance Dynamics</h2>
+                <p class="text-sm text-slate-400 block md:hidden mb-4">Select a region to filter projections.</p>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                <select id="regionFilter" class="w-full sm:w-64 bg-slate-800 text-white border border-slate-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold transition-all">
+                    <option value="All">All Regions (Statewide)</option>
+                    <option value="Northern">Northern TN</option>
+                    <option value="Western">Western TN (Kongu)</option>
+                    <option value="Delta">Cauvery Delta</option>
+                    <option value="Southern">Southern TN</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Main Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            
+            <!-- Seat Projection Bar Chart -->
+            <section class="glass-panel rounded-2xl p-6 lg:p-8 flex flex-col">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white tracking-wide">Projected Seat Range</h2>
+                        <p class="text-slate-400 text-sm mt-1">Estimated seats per alliance based on poll aggregates.</p>
+                    </div>
+                </div>
+                <div class="chart-container flex-grow">
+                    <canvas id="seatProjectionChart"></canvas>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-700/50">
+                    <p class="text-sm text-slate-300"><span class="text-emerald-400 font-semibold">Insight:</span> The DMK alliance holds a slight advantage, but the race is tightening compared to 2021, putting them close to the halfway mark.</p>
+                </div>
+            </section>
+
+            <!-- Vote Share Donut Chart -->
+            <section class="glass-panel rounded-2xl p-6 lg:p-8 flex flex-col">
+                <div class="flex justify-between items-start mb-6">
+                     <div>
+                        <h2 class="text-2xl font-bold text-white tracking-wide">Projected Vote Share%</h2>
+                        <p class="text-slate-400 text-sm mt-1">Statewide popular vote distribution.</p>
+                    </div>
+                </div>
+                <div class="chart-container flex-grow flex justify-center items-center">
+                    <canvas id="voteShareChart"></canvas>
+                </div>
+                 <div class="mt-4 pt-4 border-t border-slate-700/50">
+                    <p class="text-sm text-slate-300"><span class="text-emerald-400 font-semibold">Insight:</span> TVK emerges as a significant third force, disrupting the traditional bi-polar dynamic by capturing ~11% of the vote.</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- Scenario Analysis Section -->
+        <section class="glass-panel rounded-2xl p-8 mb-8 border-l-4 border-l-orange-500">
+            <h2 class="text-3xl font-bold text-white mb-6">Poll Analyst's Corner: The TVK Factor</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                     <p class="text-slate-300 leading-relaxed mb-4">
+                        The 2026 election is defined by a multi-cornered contest unseen in recent history. While the DMK and AIADMK remain the primary contenders, the entry of Actor Vijay's **Tamilaga Vettri Kazhagam (TVK)** has drastically altered vote calculations.
+                    </p>
+                    <p class="text-slate-300 leading-relaxed">
+                        Pre-polls indicate TVK may only secure a handful of physical seats (1-5) due to the first-past-the-post system. However, their projected **11-13% vote share** makes them the ultimate "spoiler."
+                    </p>
+                </div>
+                <div class="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+                    <h3 class="text-lg font-bold text-orange-400 mb-3">Key Scenarios:</h3>
+                    <ul class="space-y-3 text-sm text-slate-300">
+                        <li class="flex items-start">
+                            <svg class="w-5 h-5 text-green-400 mr-2 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span><strong>Hung Assembly Risk:</strong> Increased probability if DMK drops below 40% vote share in tight constituencies.</span>
+                        </li>
+                        <li class="flex items-start">
+                             <svg class="w-5 h-5 text-red-400 mr-2 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span><strong>Anti-Incumbency Split:</strong> TVK and AIADMK are currently dividing the anti-incumbency vote, inadvertently aiding the ruling DMK in triangulated fights.</span>
+                        </li>
+                         <li class="flex items-start">
+                             <svg class="w-5 h-5 text-blue-400 mr-2 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            <span><strong>Kongu Belt Battleground:</strong> Western TN remains the most fiercely contested region, with AIADMK showing strong retention.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- Dark Theme Chart Defaults ---
+        Chart.defaults.color = '#94a3b8'; // Slate 400
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        const gridColor = 'rgba(255, 255, 255, 0.05)';
+
+        // --- Mock Data: 2026 Pre-Poll Projections ---
+        const colors = {
+            dmk: '#E12A2A',    // DMK Red
+            aiadmk: '#1E9E42', // AIADMK Green
+            tvk: '#F59E0B',    // TVK Amber/Yellow
+            ntk: '#94A3B8',    // NTK Slate
+            bjp: '#F97316',    // BJP Orange (if showing alliances broken down)
+            other: '#64748B'
+        };
+
+        const electionData = {
+            statewide: {
+                label: "All Regions (Statewide)",
+                seats: {
+                    labels: ['DMK+', 'AIADMK+', 'TVK', 'NTK', 'Others'],
+                    // Using ranges for realism [Min, Max]
+                    data: [
+                        [112, 126], 
+                        [102, 116], 
+                        [1, 5],     
+                        [0, 2],     
+                        [0, 1]      
+                    ],
+                    bgColors: [
+                        colors.dmk, colors.aiadmk, colors.tvk, colors.ntk, colors.other
+                    ]
+                },
+                voteShare: {
+                    labels: ['DMK Alliance', 'AIADMK Alliance', 'TVK', 'NTK', 'Others/MNM/BJP'],
+                    data: [42.5, 38.0, 11.5, 5.0, 3.0],
+                    bgColors: [
+                        colors.dmk, colors.aiadmk, colors.tvk, colors.ntk, colors.other
+                    ]
+                }
+            },
+            northern: {
+                label: "Northern TN (Vanniyar Belt & Chennai)",
+                seats: {
+                    labels: ['DMK+', 'AIADMK+', 'TVK'],
+                    data: [[38, 45], [20, 26], [1, 2]],
+                    bgColors: [colors.dmk, colors.aiadmk, colors.tvk]
+                }
+            },
+            western: {
+                label: "Western TN (Kongu Belt)",
+                seats: {
+                    labels: ['DMK+', 'AIADMK+', 'TVK'],
+                    data: [[15, 20], [32, 38], [0, 1]],
+                    bgColors: [colors.dmk, colors.aiadmk, colors.tvk]
+                }
+            },
+            delta: {
+                label: "Cauvery Delta Region",
+                seats: {
+                    labels: ['DMK+', 'AIADMK+', 'TVK'],
+                    data: [[28, 34], [8, 12], [0, 1]],
+                    bgColors: [colors.dmk, colors.aiadmk, colors.tvk]
+                }
+            },
+            southern: {
+                label: "Southern TN",
+                seats: {
+                    labels: ['DMK+', 'AIADMK+', 'TVK', 'NTK'],
+                    data: [[25, 30], [28, 33], [0, 2], [0, 1]],
+                    bgColors: [colors.dmk, colors.aiadmk, colors.tvk, colors.ntk]
+                }
+            }
+        };
+
+        // --- Chart Instances ---
+        let seatChartInstance = null;
+        let voteShareChartInstance = null;
+
+        // --- Helpers ---
+        // Floating point bar charts require a custom tooltip implementation in older chart.js, 
+        // but for modern v3/v4 we format the array [min, max]
+        const drawSeatChart = (regionKey) => {
+            const data = electionData[regionKey].seats;
+            const ctx = document.getElementById('seatProjectionChart').getContext('2d');
+
+            if (seatChartInstance) {
+                seatChartInstance.destroy();
+            }
+
+            seatChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Projected Seat Range',
+                        data: data.data,
+                        backgroundColor: data.bgColors.map(c => c + 'CC'), // Add transparency
+                        borderColor: data.bgColors,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        hoverBackgroundColor: data.bgColors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y', // Horizontal bar chart
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { family: "'Outfit', sans-serif", size: 14 },
+                            bodyFont: { family: "'Inter', sans-serif", size: 13, weight: 'bold' },
+                            padding: 12,
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw;
+                                    if(Array.isArray(val)) {
+                                        return ` Range: ${val[0]} to ${val[1]} Seats`;
+                                    }
+                                    return ` ${val} Seats`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: gridColor, drawBorder: false },
+                            ticks: { 
+                                font: { family: "'Outfit', sans-serif" },
+                                // Add majority line annotation if statewide
+                                callback: function(value) { return value; }
+                            },
+                        },
+                        y: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { 
+                                font: { weight: 'bold', size: 13, family: "'Outfit', sans-serif" },
+                                color: '#e2e8f0'
+                            }
+                        }
+                    }
+                },
+                // Add custom plugin to draw majority line
+                plugins: [{
+                    id: 'majorityLine',
+                    afterDraw: (chart) => {
+                        if (regionKey !== 'statewide') return; // Only draw for all regions
+
+                        const ctx = chart.ctx;
+                        const xAxis = chart.scales.x;
+                        const yAxis = chart.scales.y;
+                        
+                        const majorityValue = 118;
+                        const xPx = xAxis.getPixelForValue(majorityValue);
+                        
+                        if (xPx >= xAxis.left && xPx <= xAxis.right) {
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.setLineDash([5, 5]);
+                            ctx.moveTo(xPx, yAxis.top);
+                            ctx.lineTo(xPx, yAxis.bottom);
+                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = '#ef4444'; // Red-500
+                            ctx.stroke();
+                            
+                            // Label
+                            ctx.fillStyle = '#ef4444';
+                            ctx.font = "bold 12px 'Outfit', sans-serif";
+                            ctx.fillText("Majority Mark (118)", xPx + 5, yAxis.top + 15);
+                            ctx.restore();
+                        }
+                    }
+                }]
+            });
+        };
+
+        const drawVoteShareChart = () => {
+             // Vote share is generally statewide, so we dont re-draw on filter
+            const data = electionData.statewide.voteShare;
+            const ctx = document.getElementById('voteShareChart').getContext('2d');
+
+            if (voteShareChartInstance) {
+                return; // Don't redraw if it exists, it's static statewide data
+            }
+
+            voteShareChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: data.bgColors.map(c => c + 'DD'),
+                        borderColor: '#0B1120', // Match background
+                        borderWidth: 3,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { family: "'Outfit', sans-serif", size: 14 },
+                            bodyFont: { family: "'Inter', sans-serif", size: 14, weight: 'bold' },
+                            padding: 12,
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.raw}% Share`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const filter = document.getElementById('regionFilter');
+            
+            // Initial Draw
+            drawSeatChart('statewide');
+            drawVoteShareChart();
+
+            // Handle Filter Changes
+            filter.addEventListener('change', (e) => {
+                const map = {
+                    'All': 'statewide',
+                    'Northern': 'northern',
+                    'Western': 'western',
+                    'Delta': 'delta',
+                    'Southern': 'southern'
+                };
+                drawSeatChart(map[e.target.value]);
+            });
+        });
+    </script>
+</body>
+</html>
